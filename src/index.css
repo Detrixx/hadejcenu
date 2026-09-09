@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* Cela stranka se plynule zvetsuje se sirkou obrazovky - podobne jako
+   kdyby uzivatel zoomoval. Vsechny rozmery v Tailwindu jsou v rem,
+   takze se zaroven skaluje text, mezery i sirka praveho sloupce.
+   Orientacne:  1280px -> ~17,5px   1920px -> ~20px
+                2560px -> ~23px     3840px -> 28px (strop)
+   Pod 1280px plati spodni mez 17px, takze mobil zustava citelny. */
+html {
+  font-size: clamp(17px, 12px + 0.42vw, 28px);
+}
+
+@keyframes najed {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes puls {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+}
+
+.najed {
+  animation: najed 0.35s ease-out both;
+}
+
+.puls {
+  animation: puls 0.5s ease-out 0.15s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .najed,
+  .puls {
+    animation: none;
+  }
+}
+
+@keyframes blikani {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.blika {
+  animation: blikani 0.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Barva varuje dal, jen prestane blikat. */
+  .blika { animation: none; }
+}
