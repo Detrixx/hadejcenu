@@ -1,34 +1,20 @@
 # hadejcenu.cz
 
-Hra na hádání cen nemovitostí. Dostaneš fotky bytu nebo domu, pár údajů
-o něm a zkusíš odhadnout, za kolik se prodává. Čím blíž jsi, tím víc bodů.
+Hra na hádání cen nemovitostí podle fotek. Inspirováno
+[cribguessr.com](https://cribguessr.com), s českými inzeráty.
 
-Inspirováno [cribguessr.com](https://cribguessr.com), ale s českými inzeráty.
+## Popis
 
-## Jak to funguje
+Statický web bez backendu. Data inzerátů leží v `src/data/inzeraty.json`
+a balí se do aplikace, fotky mají vlastní kopii na Cloudflare R2. Za běhu
+se ze Srealit nestahuje nic, takže hra funguje i po smazání inzerátu.
 
-Statický web bez backendu. Data o inzerátech leží v `src/data/inzeraty.json`
-a zabalí se rovnou do aplikace, fotky jsou ve vlastní kopii na Cloudflare R2.
-Hra tedy nestahuje za běhu nic ze Srealit a funguje i poté, co tam inzerát
-zmizí.
+Skóre vychází z poměru tipu a skutečné ceny, ne z rozdílu v korunách.
+Dvojnásobný tip je stejná chyba jako poloviční, díky čemuž je garsonka
+za 1,5 milionu stejně obtížná jako vila za 30.
 
-### Skóre
-
-Body se počítají z **poměru** tipu a skutečné ceny, ne z rozdílu v korunách.
-Tip dvojnásobný je stejná chyba jako tip poloviční, takže garsonka za 1,5
-milionu je stejně těžká jako vila za 30. Bez toho by u drahých nemovitostí
-stačilo střelit velké číslo.
-
-### Režimy
-
-| Režim | Rozsah cen |
-|---|---|
-| Klasika | vše |
-| Luxus | od 10 mil. |
-| Brloh | do 3 mil. |
-
-K tomu jde filtrovat podle typu (byty / domy) a kraje a nastavit čas na kolo
-od 5 sekund po neomezeně.
+Režimy: **Klasika** (vše), **Luxus** (od 10 mil.), **Brloh** (do 3 mil.).
+K tomu filtr podle typu a kraje a čas na kolo od 5 sekund po neomezeně.
 
 ## Vývoj
 
@@ -41,7 +27,7 @@ npm run lint
 
 ## Skripty
 
-Oba se pouštějí ručně, hra je za běhu nepotřebuje.
+Spouštějí se ručně, aplikace je za běhu nepoužívá.
 
 ```bash
 node scripts/sber.mjs 300    # nasbírá inzeráty ze Srealit
@@ -49,21 +35,15 @@ node scripts/fotky.mjs       # stáhne fotky a nahraje je na R2
 ```
 
 `sber.mjs` projde všech 14 krajů zvlášť pro byty a domy, u každého inzerátu
-stáhne i detail (kvůli patru, stavu objektu a ploše pozemku) a výsledek uloží
+stáhne i detail kvůli patru, stavu objektu a ploše pozemku, a výsledek uloží
 do `src/data/inzeraty.json`. Zdrojové adresy fotek jdou zvlášť do
 `data/fotky-zdroje.json`, aby se nebalily do aplikace.
 
-`fotky.mjs` je potřeba pustit po každém sběru. Umí `--test` pro ověření
-spojení s R2 a `--limit N` pro zkušební dávku. Lze ho kdykoli přerušit
-a spustit znovu — už nahrané fotky přeskočí.
+`fotky.mjs` je nutné spustit po každém sběru. Přepínač `--test` ověří spojení
+s R2, `--limit N` zpracuje jen prvních N inzerátů. Skript lze kdykoli přerušit
+a spustit znovu, už nahrané fotky přeskočí.
 
-### Nastavení
+## Nastavení
 
-Zkopíruj `.env.example` jako `.env` a vyplň údaje z Cloudflare R2.
-Soubor `.env` se neverzuje.
-
-## Poznámky k datům
-
-Fotky ze Srealit nejdou načíst ze syrové adresy (vrací 401) — fungují jen
-přesné transformační presety, které používá jejich vlastní web. Strop je
-1200 px na delší straně. Podrobnosti v `src/lib/fotky.js`.
+Soubor `.env.example` se zkopíruje jako `.env` a doplní se údaji z Cloudflare
+R2. Samotný `.env` se neverzuje.
