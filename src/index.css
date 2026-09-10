@@ -115,18 +115,11 @@ html {
    prstem. Zvetsujeme mu plochu podle druhu ovladani, ne podle sirky okna -
    uzke okno na pocitaci ma porad mys. */
 @media (pointer: coarse) {
+  /* Vetsi plocha na chyceni prstem. Rozmery samotneho uchytu zamerne
+     nenastavujeme - Chrome to bez vypnuti vychoziho vzhledu neresi
+     spolehlive a posuvnik pak jde chytit, ale ne tahnout. */
   input[type="range"] {
     height: 2.25rem;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  input[type="range"]::-moz-range-thumb {
-    width: 1.75rem;
-    height: 1.75rem;
   }
 }
 

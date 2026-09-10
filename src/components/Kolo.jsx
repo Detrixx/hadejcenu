@@ -15,20 +15,34 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
   // nesla by cena vubec napsat - "5" by hned skocilo na minimum.
   const [rozepsano, setRozepsano] = useState(null);
 
+  // Poloha slideru je vlastni stav, ne dopocet z ceny. Kdyby se pocitala
+  // zpetne, zaokrouhleni ceny by ji pri tazeni vracelo o kousek zpatky
+  // a posuvnik by se v Chromu choval, jako by zamrzl.
+  const [pozice, setPozice] = useState(() =>
+    Math.round(cenaNaPozici(vychoziTip(rezim), MIN, MAX) * KROKU)
+  );
+
   const posun = (e) => {
+    const p = Number(e.target.value);
     setRozepsano(null);
-    setTip(poziceNaCenu(Number(e.target.value) / KROKU, MIN, MAX));
+    setPozice(p);
+    setTip(poziceNaCenu(p / KROKU, MIN, MAX));
   };
 
   const napsano = (e) => {
     const text = e.target.value;
     setRozepsano(text);
     const cislo = Number(text.replace(/[\s ]/g, ""));
-    if (Number.isFinite(cislo) && cislo > 0) setTip(cislo);
+    if (Number.isFinite(cislo) && cislo > 0) {
+      setTip(cislo);
+      setPozice(Math.round(cenaNaPozici(cislo, MIN, MAX) * KROKU));
+    }
   };
 
   const dopsano = () => {
-    setTip((t) => Math.min(Math.max(t, MIN), MAX));
+    const srovnany = Math.min(Math.max(tip, MIN), MAX);
+    setTip(srovnany);
+    setPozice(Math.round(cenaNaPozici(srovnany, MIN, MAX) * KROKU));
     setRozepsano(null);
   };
 
@@ -111,7 +125,7 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
             type="range"
             min={0}
             max={KROKU}
-            value={Math.round(cenaNaPozici(tip, MIN, MAX) * KROKU)}
+            value={pozice}
             onChange={posun}
             aria-label="Odhad ceny"
             className="w-full accent-emerald-400"

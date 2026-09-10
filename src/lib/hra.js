@@ -89,12 +89,21 @@ export function vychoziTip(rezimId) {
   return Math.round(Math.exp((Math.log(min) + Math.log(max)) / 2) / KROK) * KROK;
 }
 
+// Zaokrouhlujeme podle radu ceny, ne pevne na desetitisice. U dvousettisicove
+// chalupy je krok 1 000 Kc, u dvacetimilionove vily 100 000 - jinak by desitky
+// sousednich poloh slideru davaly tutez cenu a posuvnik by se pri tazeni vracel.
+function krokProCenu(cena) {
+  const rad = Math.floor(Math.log10(Math.max(cena, 1)));
+  return Math.max(1000, Math.pow(10, rad - 2));
+}
+
 // Slider je logaritmicky: krok u dvoumilionoveho bytu ma byt jemnejsi
 // nez u dvacetimilionove vily. Linearni slider by levne nemovitosti
 // zmackl do nekolika pixelu.
 export function poziceNaCenu(t, min = MIN_CENA, max = MAX_CENA) {
   const cena = Math.exp(Math.log(min) + t * (Math.log(max) - Math.log(min)));
-  return Math.round(cena / KROK) * KROK;
+  const krok = krokProCenu(cena);
+  return Math.round(cena / krok) * krok;
 }
 
 export function cenaNaPozici(cena, min = MIN_CENA, max = MAX_CENA) {
