@@ -142,8 +142,12 @@ async function nahrajVse(limit) {
     process.exit(1);
   }
 
-  db.fotkyZaklad = zaklad;
-  writeFileSync(DATA, JSON.stringify(db, null, 2) + "\n", "utf8");
+  // Soubor nacteme znovu a zmenime v nem jen jedinou polozku. Kdybychom
+  // zapsali kopii z zacatku behu, prepsali bychom vsechno, co mezitim
+  // zapsal soubezne bezici sber - a nove inzeraty by zmizely.
+  const aktualni = JSON.parse(readFileSync(DATA, "utf8"));
+  aktualni.fotkyZaklad = zaklad;
+  writeFileSync(DATA, JSON.stringify(aktualni, null, 2) + "\n", "utf8");
   console.log(`Hotovo. Nahrano ${hotovo}, preskoceno ${preskoceno}, chyb ${chyby.length}, celkem ${(bajtu / 1024 / 1024).toFixed(0)} MB.`);
   console.log(`Fotky se nacitaji z ${zaklad}`);
 }

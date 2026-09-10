@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { poziceNaCenu, cenaNaPozici, rozsahRezimu, vychoziTip } from "../lib/hra";
+import { poziceNaCenu, cenaNaPozici, rozsahRezimu, vychoziTip, maMapu } from "../lib/hra";
 import { formatCena, formatCislo } from "../lib/skore";
 import Galerie from "./Galerie";
 import Parametry from "./Parametry";
+import Mapa from "./Mapa";
 
 const KROKU = 1000;
 
@@ -47,14 +48,20 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
       <Galerie inzerat={inzerat} />
 
-      <div className="najed space-y-5 self-start lg:sticky lg:top-8">
-        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-5">
+      {/* Ovladani je pripnute dole a pretece jen karta s udaji. Bez toho by
+          se u inzeratu s mnoha parametry tlacitko "Hadam" schovalo pod okraj
+          okna a hrac by na nej musel rolovat. */}
+      {/* 7rem = odsazeni stranky (1,5) + hlavicka s mezerou (4) + rezerva dole
+          (1,5). Panel zacina pod hlavickou, takze pouhe 100vh minus okraje by
+          ho poslalo o tu hlavicku pod spodni hranu okna. */}
+      <div className="najed flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:max-h-[calc(100vh-7rem)]">
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-700 bg-slate-800/50 p-4">
           <div className="text-xl font-bold text-slate-50">
             {inzerat.typ === "byt" ? "Byt" : "Dům"} {inzerat.dispozice}
           </div>
           <div className="mt-0.5 text-slate-400">{inzerat.plochaM2} m²</div>
 
-          <div className="mt-4 space-y-2 border-t border-slate-700 pt-4">
+          <div className="mt-3 space-y-1.5 border-t border-slate-700 pt-3">
             <div className="font-medium text-slate-200">{misto}</div>
             <div className="inline-flex items-center gap-1.5 rounded-md border border-sky-800/60 bg-sky-950/40 px-2.5 py-1 text-sm font-semibold text-sky-300">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
@@ -68,10 +75,16 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
           <Parametry inzerat={inzerat} />
         </div>
 
-        <div className="space-y-3">
+        {maMapu(rezim) && inzerat.lat != null && inzerat.lon != null && (
+          <div className="shrink-0">
+            <Mapa lat={inzerat.lat} lon={inzerat.lon} obec={inzerat.obec} />
+          </div>
+        )}
+
+        <div className="shrink-0 space-y-2">
           <div>
             <div className="text-xs uppercase tracking-wide text-slate-500">Tvůj tip</div>
-            <div className="mt-1 text-3xl font-bold tabular-nums text-slate-50">
+            <div className="mt-0.5 text-2xl font-bold tabular-nums text-slate-50">
               {formatCena(tip)}
             </div>
           </div>
@@ -106,7 +119,7 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
 
         <button
           onClick={() => { odeslano.current = true; onTip(tip); }}
-          className="w-full rounded-lg bg-emerald-500 py-3.5 text-lg font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
+          className="w-full shrink-0 rounded-lg bg-emerald-500 py-3 text-lg font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
         >
           Hádám
         </button>

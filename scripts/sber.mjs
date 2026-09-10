@@ -21,6 +21,25 @@ const KRAJE = [
   "pardubicky-kraj", "vysocina-kraj", "jihomoravsky-kraj", "olomoucky-kraj",
   "zlinsky-kraj", "moravskoslezsky-kraj",
 ];
+// Adresni tvar -> nazev, jaky Sreality vraci v datech. Potrebujeme ho,
+// abychom u uz nasbiranych inzeratu poznali, do ktereho kraje patri.
+const KRAJE_NAZVY = {
+  "praha": "Hlavní město Praha",
+  "stredocesky-kraj": "Středočeský kraj",
+  "jihocesky-kraj": "Jihočeský kraj",
+  "plzensky-kraj": "Plzeňský kraj",
+  "karlovarsky-kraj": "Karlovarský kraj",
+  "ustecky-kraj": "Ústecký kraj",
+  "liberecky-kraj": "Liberecký kraj",
+  "kralovehradecky-kraj": "Královéhradecký kraj",
+  "pardubicky-kraj": "Pardubický kraj",
+  "vysocina-kraj": "Kraj Vysočina",
+  "jihomoravsky-kraj": "Jihomoravský kraj",
+  "olomoucky-kraj": "Olomoucký kraj",
+  "zlinsky-kraj": "Zlínský kraj",
+  "moravskoslezsky-kraj": "Moravskoslezský kraj",
+};
+
 const TYPY = [["byt", "byty"], ["dum", "domy"]];
 
 const spi = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -127,8 +146,19 @@ function sestav(zaznam, det, typ, dnes) {
   };
 }
 
+// Sreality pouzivaji cenu 1 Kc pro "cena na vyzadani" a drazby - takovy
+// inzerat se hadat neda. Horni mez musi odpovidat slideru v src/lib/hra.js,
+// jinak by se spravna odpoved nedala zadat.
+const MIN_CENA = 100_000;
+const MAX_CENA = 60_000_000;
+
 const pouzitelny = (z) =>
-  z.cena > 0 && z.plochaM2 > 0 && z._fotky.length >= MIN_FOTEK && z.obec && z.kraj;
+  z.cena >= MIN_CENA &&
+  z.cena <= MAX_CENA &&
+  z.plochaM2 > 0 &&
+  z._fotky.length >= MIN_FOTEK &&
+  z.obec &&
+  z.kraj;
 
 // --- hlavni beh -------------------------------------------------------------
 
@@ -136,16 +166,43 @@ const dnes = new Date().toISOString().slice(0, 10);
 const naKombinaci = Math.ceil(CIL / (KRAJE.length * TYPY.length));
 console.log(`Cil ${CIL} inzeratu, tj. ~${naKombinaci} na kazdou kombinaci kraj/typ.\n`);
 
+// Databaze jen roste. Uz nasbirane inzeraty zustavaji - maji nahrane fotky
+// na R2 a prodany inzerat je pro hru stejne dobry jako aktivni.
+const cestaData = "src/data/inzeraty.json";
+const cestaZdroje = "data/fotky-zdroje.json";
+
+const stavajici = existsSync(cestaData)
+  ? JSON.parse(readFileSync(cestaData, "utf8")).inzeraty ?? []
+  : [];
+const stavajiciZdroje = existsSync(cestaZdroje)
+  ? JSON.parse(readFileSync(cestaZdroje, "utf8"))
+  : {};
+
 const hotovo = [];
-const videna = new Set();
+const videna = new Set(stavajici.map((z) => String(z.id)));
 let chyb = 0;
+
+if (stavajici.length) {
+  console.log(`V databazi uz je ${stavajici.length} inzeratu, doplnujeme na ${CIL}.\n`);
+}
+
+const kolikJich = (typ, kraj) =>
+  stavajici.filter((z) => z.typ === typ && z.kraj === kraj).length;
 
 for (const [typ, typSlug] of TYPY) {
   for (const kraj of KRAJE) {
-    const chci = naKombinaci;
+    // Kvota plati na celkovy pocet, ne na pocet novych - jinak by kraje,
+    // kde uz neco mame, prerostly ostatni.
+    const uzMame = kolikJich(typ, KRAJE_NAZVY[kraj] ?? kraj);
+    const chci = Math.max(0, naKombinaci - uzMame);
     const vzato = [];
 
-    for (let strana = 1; strana <= 3 && vzato.length < chci; strana++) {
+    if (chci === 0) {
+      console.log(`  ${typ.padEnd(4)} ${kraj.padEnd(22)}   0  (uz mame ${uzMame})`);
+      continue;
+    }
+
+    for (let strana = 1; strana <= 8 && vzato.length < chci; strana++) {
       const res = await vypis(kraj, typSlug, strana);
       await spi(PAUZA_MS);
       if (!res.length) break;
@@ -179,42 +236,43 @@ for (const [typ, typSlug] of TYPY) {
   }
 }
 
-console.log(`\nNasbirano ${hotovo.length}, nedostupnych detailu: ${chyb}`);
+console.log(`\nNove nasbirano ${hotovo.length}, nedostupnych detailu: ${chyb}`);
 
-// Pojistka: kdyz sber selze (Sreality zmeni strukturu), nechceme prepsat
-// funkcni data prazdnym souborem.
-const cesta = "src/data/inzeraty.json";
-if (existsSync(cesta)) {
-  const stare = JSON.parse(readFileSync(cesta, "utf8")).inzeraty?.length ?? 0;
-  if (hotovo.length < Math.min(stare, CIL * 0.5)) {
-    console.error(`\nPRERUSENO: nasbirano jen ${hotovo.length}, puvodni soubor ma ${stare}. Data nechavam beze zmeny.`);
-    process.exit(1);
-  }
+// Pojistka: kdyz Sreality zmeni strukturu stranky, sber nic nenajde.
+// V tom pripade nechceme sahat na funkcni data.
+if (stavajici.length && hotovo.length === 0 && chyb > 0) {
+  console.error("\nPRERUSENO: nenasbirano nic a detaily selhavaly. Data nechavam beze zmeny.");
+  process.exit(1);
 }
 
 // Zdrojove adresy fotek hra nepotrebuje - pouziva je jen scripts/fotky.mjs.
 // Drzime je mimo src/, aby se nebalily do aplikace.
-const zdroje = {};
-const proHru = hotovo.map(({ _fotky, ...z }) => {
+const zdroje = { ...stavajiciZdroje };
+const nove = hotovo.map(({ _fotky, ...z }) => {
   zdroje[z.id] = _fotky;
   return z;
 });
+const proHru = [...stavajici, ...nove];
 
 // fotkyZaklad nastavuje az scripts/fotky.mjs po nahrani; pokud uz nejaky
 // znamy je, zachovame ho, at hra po novem sberu neztrati fotky.
-const drive = existsSync(cesta)
-  ? (JSON.parse(readFileSync(cesta, "utf8")).fotkyZaklad ?? null)
+const drive = existsSync(cestaData)
+  ? (JSON.parse(readFileSync(cestaData, "utf8")).fotkyZaklad ?? null)
   : null;
 
 mkdirSync("src/data", { recursive: true });
 mkdirSync("data", { recursive: true });
-writeFileSync("data/fotky-zdroje.json", JSON.stringify(zdroje) + "\n", "utf8");
+writeFileSync(cestaZdroje, JSON.stringify(zdroje) + "\n", "utf8");
 writeFileSync(
-  cesta,
+  cestaData,
   JSON.stringify({ verze: 3, sebranoDne: dnes, fotkyZaklad: drive, inzeraty: proHru }, null, 2) + "\n",
   "utf8"
 );
 
-const byty = hotovo.filter((z) => z.typ === "byt").length;
-const fotek = hotovo.reduce((s, z) => s + z._fotky.length, 0);
-console.log(`Ulozeno: ${hotovo.length} inzeratu (${byty} bytu, ${hotovo.length - byty} domu), ${fotek} fotek.`);
+const byty = proHru.filter((z) => z.typ === "byt").length;
+const fotekNovych = hotovo.reduce((s, z) => s + z._fotky.length, 0);
+console.log(
+  `Ulozeno: ${proHru.length} inzeratu celkem (${byty} bytu, ${proHru.length - byty} domu).`
+);
+console.log(`Pribylo ${nove.length} inzeratu a ${fotekNovych} fotek k nahrani na R2.`);
+console.log("\nDalsi krok: node scripts/fotky.mjs");

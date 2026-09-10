@@ -105,7 +105,7 @@ export default function Galerie({ inzerat }) {
       </div>
 
       {pocet > 1 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="pas-nahledu flex gap-1.5 overflow-x-auto pb-1">
           {Array.from({ length: pocet }, (_, i) => (
             <button
               key={i}

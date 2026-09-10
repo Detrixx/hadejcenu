@@ -43,9 +43,13 @@ export const REZIMY = [
   { id: "klasika", popisek: "Klasika", popis: "Všechny nemovitosti" },
   { id: "luxus", popisek: "Luxus", popis: "Od 10 mil.", min: 10_000_000 },
   { id: "brloh", popisek: "Brloh", popis: "Do 3 mil.", max: 3_000_000 },
+  { id: "hardcore", popisek: "Hardcore", popis: "Bez mapy", mapa: false },
 ];
 
 const rezimPodleId = (id) => REZIMY.find((r) => r.id === id) ?? REZIMY[0];
+
+// Rezimy krome Hardcore mapu ukazuji.
+export const maMapu = (rezimId) => rezimPodleId(rezimId).mapa !== false;
 
 function filtruj({ typ = null, kraj = null, rezim = "klasika" } = {}) {
   const r = rezimPodleId(rezim);

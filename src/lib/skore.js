@@ -18,7 +18,7 @@ export function odchylkaProcent(tip, cena) {
 export function hodnoceni(body) {
   if (body >= 900) return { text: "Trefa!", barva: "text-emerald-400" };
   if (body >= 700) return { text: "Velmi blízko", barva: "text-emerald-400" };
-  if (body >= 450) return { text: "Ucházející", barva: "text-amber-400" };
+  if (body >= 450) return { text: "Ujde to", barva: "text-amber-400" };
   if (body >= 200) return { text: "Dost vedle", barva: "text-orange-400" };
   return { text: "Úplně mimo", barva: "text-rose-400" };
 }

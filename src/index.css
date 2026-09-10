@@ -8,6 +8,9 @@
    Pod 1280px plati spodni mez 17px, takze mobil zustava citelny. */
 html {
   font-size: clamp(17px, 12px + 0.42vw, 28px);
+  /* Rika prohlizeci i doplnkum, ze stranka uz tmavy vzhled ma. Zaroven z toho
+     tezi vestavene prvky - slider, rozbalovaci seznam, posuvniky. */
+  color-scheme: dark;
 }
 
 @keyframes najed {
@@ -53,4 +56,57 @@ html {
 @media (prefers-reduced-motion: reduce) {
   /* Barva varuje dal, jen prestane blikat. */
   .blika { animation: none; }
+}
+
+/* Vychozi posuvniky jsou v tmavem rozhrani prilis kontrastni. Firefox
+   ma na to vlastni vlastnosti, ostatni prohlizece pseudoprvky - proto
+   oboji. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Pas nahledu pod fotkou je nizky, tak at ho posuvnik nepreroste. */
+.pas-nahledu {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}
+
+.pas-nahledu::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pas-nahledu::-webkit-scrollbar-thumb {
+  background: #475569;
+  border: 0;
+  border-radius: 999px;
+}
+
+.pas-nahledu::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
