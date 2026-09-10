@@ -13,5 +13,14 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Cloudflare Web Analytics. Merit musi rucne vlozenym skriptem, protoze
+         provoz jde primo na Vercel a pres Cloudflare neproteka. Nepouziva
+         cookies, takze nepotrebujeme listu se souhlasem. -->
+    <script
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "ed1dae1f46df4962b5b480da04d58d28"}'
+    ></script>
   </body>
 </html>

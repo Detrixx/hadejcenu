@@ -1,0 +1,9 @@
+name = "hadejcenu-zebricek"
+main = "index.js"
+compatibility_date = "2026-09-10"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hadejcenu"
+# Neni to tajny udaj, klidne muze do gitu.
+database_id = "83427f80-3f1d-4188-8b77-8bea15e39a8e"

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { formatCena, odchylkaProcent, BODU_ZA_KOLO } from "../lib/skore";
 import { usePocitadlo } from "../lib/usePocitadlo";
 import { sestavText, ctverec, sdilej } from "../lib/sdileni";
+import Zebricek from "./Zebricek";
 
 export default function Konec({
   vysledky,
@@ -75,6 +76,8 @@ export default function Konec({
           {popisTlacitka ?? "Sdílet výsledek"}
         </button>
       </div>
+
+      {jeDenni && datum && <Zebricek datum={datum} body={celkem} />}
 
       <ol className="space-y-2">
         {vysledky.map((v, i) => {

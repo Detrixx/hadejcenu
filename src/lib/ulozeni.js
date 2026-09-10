@@ -15,7 +15,7 @@ export function nacti() {
   }
 }
 
-function zapis(stav) {
+export function zapisStav(stav) {
   try {
     localStorage.setItem(KLIC, JSON.stringify(stav));
   } catch {
@@ -44,7 +44,7 @@ export function zapisDenni(datum, body, tipy) {
   stav.posledniDen = datum;
   stav.serie = serie;
   stav.nejdelsiSerie = Math.max(stav.nejdelsiSerie, serie);
-  return zapis(stav);
+  return zapisStav(stav);
 }
 
 // Serie plati jen dnes nebo vcera - starsi uz je preruseny.
@@ -60,3 +60,35 @@ export function nejlepsiVolna(stav) {
   const body = Object.values(stav.dny).map((d) => d.body);
   return body.length ? Math.max(...body) : 0;
 }
+
+// Nahodny identifikator prohlizece. Slouzi k tomu, aby sel do zebricku
+// jeden zapis na den - neni to prihlaseni ani nic, co by clovek poznal.
+export function idHrace() {
+  const stav = nacti();
+  if (stav.id) return stav.id;
+  const id =
+    globalThis.crypto?.randomUUID?.() ??
+    Math.random().toString(36).slice(2) + Date.now().toString(36);
+  stav.id = id;
+  zapisStav(stav);
+  return id;
+}
+
+export function nactiPrezdivku() {
+  return nacti().prezdivka ?? "";
+}
+
+export function zapisPrezdivku(prezdivka) {
+  const stav = nacti();
+  stav.prezdivka = prezdivka;
+  zapisStav(stav);
+}
+
+// Poznamena, ze dnesni vysledek uz do zebricku odesel.
+export function oznacOdeslano(datum) {
+  const stav = nacti();
+  stav.odeslano = { ...(stav.odeslano ?? {}), [datum]: true };
+  zapisStav(stav);
+}
+
+export const jeOdeslano = (datum) => Boolean(nacti().odeslano?.[datum]);

@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { popisDatumu } from "../lib/denni";
 import { formatCislo } from "../lib/skore";
+import Zebricek from "./Zebricek";
 
 // Vstup do denni vyzvy na uvodni obrazovce. Ukazuje, jestli uz je dnesek
-// odehrany, a jak dlouhou ma hrac serii.
+// odehrany, a jak dlouhou ma hrac serii. Kdyz uz odehrany je, umi rozbalit
+// zebricek - jinak by se k nemu po zbytek dne nedalo dostat.
 export default function DenniVyzva({ datum, odehrano, vysledek, serie, onHrat }) {
+  const [zebricek, setZebricek] = useState(false);
+
   return (
     <div className="rounded-xl border-2 border-indigo-500/60 bg-indigo-500/10 p-4">
       <div className="flex items-baseline justify-between gap-3">
@@ -25,21 +30,41 @@ export default function DenniVyzva({ datum, odehrano, vysledek, serie, onHrat })
         Pět stejných nemovitostí pro všechny. Jednou denně.
       </p>
 
-      {odehrano ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-indigo-950/40 px-3 py-2">
-          <span className="text-sm text-indigo-200">Dnešek máš odehraný</span>
-          <span className="font-bold tabular-nums text-indigo-100">
-            {formatCislo(vysledek.body)} b.
-          </span>
-        </div>
-      ) : (
+      <div className="mt-3 space-y-2">
+        {odehrano ? (
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-indigo-950/40 px-3 py-2">
+            <span className="text-sm text-indigo-200">Dnešek máš odehraný</span>
+            <span className="font-bold tabular-nums text-indigo-100">
+              {formatCislo(vysledek.body)} b.
+            </span>
+          </div>
+        ) : (
+          <button
+            onClick={onHrat}
+            className="w-full rounded-lg bg-indigo-500 py-2.5 font-semibold text-white transition hover:bg-indigo-400 active:scale-[0.98]"
+          >
+            Hrát dnešní výzvu
+          </button>
+        )}
+
+        {/* Zebricek je dostupny i tomu, kdo dnesni vyzvu jeste nehral -
+            jen si ho v tom pripade muze pouze prohlednout. */}
         <button
-          onClick={onHrat}
-          className="mt-3 w-full rounded-lg bg-indigo-500 py-2.5 font-semibold text-white transition hover:bg-indigo-400 active:scale-[0.98]"
+          onClick={() => setZebricek((z) => !z)}
+          aria-expanded={zebricek}
+          className="w-full rounded-lg border border-indigo-500/50 py-2 text-sm font-medium text-indigo-200 transition hover:bg-indigo-500/10"
         >
-          Hrát dnešní výzvu
+          {zebricek ? "Skrýt žebříček" : "Zobrazit žebříček"}
         </button>
-      )}
+
+        {zebricek && (
+          <Zebricek
+            datum={datum}
+            body={odehrano ? vysledek.body : null}
+            jenCteni={!odehrano}
+          />
+        )}
+      </div>
     </div>
   );
 }
