@@ -102,7 +102,7 @@ export default function Uvod({ nastaveni, onStart, denni }) {
           {otevreno && (
             <div className="space-y-4 border-t border-slate-700 px-4 pb-4 pt-4">
               <Sekce popis="Režim">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {REZIMY.map((r) => {
                     const vybrano = rezim === r.id;
                     return (

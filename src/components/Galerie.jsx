@@ -59,6 +59,27 @@ export default function Galerie({ inzerat }) {
     return () => el.removeEventListener("wheel", kolecko);
   }, [jdi, pocet]);
 
+  // Prejeti prstem. Vodorovny tah presune fotku, svisly nechame projit,
+  // aby slo strankou dal rolovat.
+  const dotyk = useRef(null);
+
+  const dotykStart = (e) => {
+    const t = e.touches[0];
+    dotyk.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const dotykKonec = (e) => {
+    if (!dotyk.current || pocet < 2) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - dotyk.current.x;
+    const dy = t.clientY - dotyk.current.y;
+    dotyk.current = null;
+    // Musi to byt zretelne vodorovny tah, jinak jde nejspis o rolovani.
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      jdi(dx < 0 ? 1 : -1);
+    }
+  };
+
   if (!pocet || !FOTKY_ZAKLAD) {
     return (
       <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-800">
@@ -74,6 +95,8 @@ export default function Galerie({ inzerat }) {
     <div className="space-y-2">
       <div
         ref={ramecek}
+        onTouchStart={dotykStart}
+        onTouchEnd={dotykKonec}
         className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-800 select-none"
       >
         {stav !== "chyba" && (

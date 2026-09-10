@@ -62,20 +62,43 @@ export default function Mapa({ lat, lon, obec }) {
     return () => clearTimeout(id);
   }, [zvetseno, lat, lon]);
 
+  // Na dotykovem displeji zadne najeti mysi neexistuje - tam se mapa
+  // rozbaluje tuknutim. Rozhoduje o tom schopnost zarizeni, ne sirka okna:
+  // i uzke okno na pocitaci ma mys.
+  const maMys =
+    typeof window !== "undefined" && window.matchMedia?.("(hover: hover)").matches;
+
+  const ovladani = maMys
+    ? { onMouseEnter: () => setZvetseno(true), onMouseLeave: () => setZvetseno(false) }
+    : { onClick: () => setZvetseno((z) => !z) };
+
   return (
     <div className="relative h-32">
       <div
-        onMouseEnter={() => setZvetseno(true)}
-        onMouseLeave={() => setZvetseno(false)}
+        {...ovladani}
         className={`absolute right-0 top-0 overflow-hidden rounded-xl border border-slate-700 transition-all duration-200 ${
-          zvetseno ? "z-20 h-96 w-[34rem] shadow-2xl shadow-slate-950/60" : "z-0 h-32 w-full"
+          zvetseno
+            ? "z-20 h-80 w-full shadow-2xl shadow-slate-950/60 sm:h-96 lg:w-[34rem]"
+            : "z-0 h-32 w-full"
         }`}
       >
         <div ref={ramecek} className="h-full w-full bg-slate-800" />
         {!zvetseno && (
           <div className="pointer-events-none absolute bottom-1.5 left-1.5 rounded bg-slate-950/75 px-2 py-0.5 text-xs text-slate-300">
-            {obec} · najeď pro přiblížení
+            {obec} · {maMys ? "najeď pro přiblížení" : "ťukni pro přiblížení"}
           </div>
+        )}
+        {zvetseno && !maMys && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setZvetseno(false);
+            }}
+            aria-label="Zavřít mapu"
+            className="absolute right-2 top-2 z-10 rounded-full bg-slate-950/80 px-3 py-1 text-sm text-slate-100"
+          >
+            Zavřít
+          </button>
         )}
       </div>
     </div>

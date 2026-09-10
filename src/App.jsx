@@ -87,8 +87,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <div className="mx-auto w-full max-w-[min(95rem,calc((100vh-11rem)*4/3+23.5rem))] px-4 py-6 sm:px-6">
-        <header className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <h1 className="text-xl font-bold tracking-tight">
+        <header className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:mb-6 sm:gap-3">
+          <h1 className="truncate text-base font-bold tracking-tight sm:text-xl">
             <button
               onClick={domu}
               aria-label="Zpět na úvodní obrazovku"
@@ -110,17 +110,25 @@ export default function App() {
 
           <div className="justify-self-end">
             {faze === "hra" && !konec && (
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2">
-                  <span className="text-xs uppercase tracking-wide text-slate-500">Kolo </span>
-                  <span className="text-lg font-bold tabular-nums text-slate-100">{index + 1}</span>
-                  <span className="text-lg text-slate-600"> / {kola.length}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="rounded-lg border border-slate-700 bg-slate-800/60 px-2 py-1 sm:px-4 sm:py-2">
+                  {/* popisky jsou na uzkem displeji zbytecne - cislo mluvi samo */}
+                  <span className="hidden text-xs uppercase tracking-wide text-slate-500 sm:inline">
+                    Kolo{" "}
+                  </span>
+                  <span className="font-bold tabular-nums text-slate-100 sm:text-lg">
+                    {index + 1}
+                  </span>
+                  <span className="text-slate-600 sm:text-lg"> / {kola.length}</span>
                 </div>
-                <div className="rounded-lg border border-emerald-700/50 bg-emerald-950/30 px-4 py-2">
-                  <span className="text-xs uppercase tracking-wide text-emerald-500/80">Body </span>
-                  <span className="text-lg font-bold tabular-nums text-emerald-300">
+                <div className="rounded-lg border border-emerald-700/50 bg-emerald-950/30 px-2 py-1 sm:px-4 sm:py-2">
+                  <span className="hidden text-xs uppercase tracking-wide text-emerald-500/80 sm:inline">
+                    Body{" "}
+                  </span>
+                  <span className="font-bold tabular-nums text-emerald-300 sm:text-lg">
                     {zobrazenePody}
                   </span>
+                  <span className="text-emerald-500/70 sm:hidden"> b</span>
                 </div>
               </div>
             )}
