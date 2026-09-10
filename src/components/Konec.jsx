@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatCena, odchylkaProcent, BODU_ZA_KOLO } from "../lib/skore";
 import { usePocitadlo } from "../lib/usePocitadlo";
+import { fanfara } from "../lib/zvuky";
 import { sestavText, ctverec, sdilej } from "../lib/sdileni";
 import Zebricek from "./Zebricek";
+import MapaVysledku from "./MapaVysledku";
 
 export default function Konec({
   vysledky,
@@ -17,6 +19,12 @@ export default function Konec({
   const podil = Math.round((celkem / maximum) * 100);
   const zobrazenoCelkem = usePocitadlo(celkem, 1200);
   const [stavSdileni, setStavSdileni] = useState(null);
+
+  // Fanfara az ve chvili, kdy se celkove skore dopocita.
+  useEffect(() => {
+    const id = setTimeout(fanfara, 1200);
+    return () => clearTimeout(id);
+  }, []);
 
   async function sdilet() {
     const vysledek = await sdilej(sestavText({ vysledky, jeDenni, datum, serie }));
@@ -76,6 +84,8 @@ export default function Konec({
           {popisTlacitka ?? "Sdílet výsledek"}
         </button>
       </div>
+
+      <MapaVysledku vysledky={vysledky} />
 
       {jeDenni && datum && <Zebricek datum={datum} body={celkem} />}
 

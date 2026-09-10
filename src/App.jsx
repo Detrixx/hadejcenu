@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { vyberKola } from "./lib/hra";
+import { useEffect, useState } from "react";
+import { vyberKola, FOTKY_ZAKLAD } from "./lib/hra";
+import { fotoUrl } from "./lib/fotky";
 import { spocitejBody } from "./lib/skore";
 import { usePocitadlo } from "./lib/usePocitadlo";
 import { denniKola, dnesniDatum } from "./lib/denni";
 import { nacti, zapisDenni, odehranoDnes, aktualniSerie } from "./lib/ulozeni";
+import { zvukZapnuty, prepniZvuk, probudZvuk } from "./lib/zvuky";
 import Uvod from "./components/Uvod";
 import Kolo from "./components/Kolo";
 import Odhaleni from "./components/Odhaleni";
@@ -22,6 +24,7 @@ export default function App() {
   const [vysledky, setVysledky] = useState([]);
   const [jeDenni, setJeDenni] = useState(false);
   const [ulozene, setUlozene] = useState(() => nacti());
+  const [zvuk, setZvuk] = useState(() => zvukZapnuty());
 
   const datum = dnesniDatum();
 
@@ -31,6 +34,9 @@ export default function App() {
   const zobrazenePody = usePocitadlo(prubeznePody, 700);
 
   function start(volby) {
+    // Prohlizec pusti zvuk az po interakci uzivatele - tohle je prvni klik,
+    // ktery k tomu mame.
+    probudZvuk();
     setJeDenni(false);
     setNastaveni(volby);
     setKola(vyberKola(volby));
@@ -44,6 +50,7 @@ export default function App() {
   // Denni vyzva ma pevnou peticti a neomezeny cas - filtry se na ni nevztahuji,
   // protoze jejim smyslem je, aby vsichni hrali totez.
   function startDenni() {
+    probudZvuk();
     setKola(denniKola(datum));
     setIndex(0);
     setOdhaleno(null);
@@ -84,6 +91,15 @@ export default function App() {
 
   const hraje = faze === "hra" && !konec && inzerat;
 
+  // Prvni fotku dalsiho kola stahneme uz ted, aby po kliknuti na "Dalsi kolo"
+  // nenaskocil sedy obdelnik a hra pusobila plynule.
+  useEffect(() => {
+    const dalsiInzerat = kola[index + 1];
+    if (!dalsiInzerat) return;
+    const u = fotoUrl(FOTKY_ZAKLAD, dalsiInzerat.id, 0, "velka");
+    if (u) new Image().src = u;
+  }, [kola, index]);
+
   return (
     <div className="min-h-screen bg-slate-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-slate-100">
       {/* Ten vypocet slouzi jedine k tomu, aby fotka vedle panelu vysla na
@@ -95,15 +111,36 @@ export default function App() {
             a skore i po odrolovani k fotce. Zaporny okraj ji roztahne pres
             odsazeni stranky, at podklad sahá od kraje ke kraji. */}
         <header className="sticky top-0 z-30 -mx-4 mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-slate-800 bg-slate-900/95 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur sm:-mx-6 sm:gap-3 sm:px-6 lg:static lg:z-auto lg:mx-0 lg:mb-6 lg:border-0 lg:bg-transparent lg:px-0 lg:pb-0 lg:pt-0 lg:backdrop-blur-none">
-          <h1 className="truncate text-base font-bold tracking-tight sm:text-xl">
+          <div className="flex min-w-0 items-center gap-2">
+            <h1 className="truncate text-base font-bold tracking-tight sm:text-xl">
+              <button
+                onClick={domu}
+                aria-label="Zpět na úvodní obrazovku"
+                className="rounded transition hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              >
+                hadejcenu.cz
+              </button>
+            </h1>
+
             <button
-              onClick={domu}
-              aria-label="Zpět na úvodní obrazovku"
-              className="rounded transition hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              onClick={() => setZvuk(prepniZvuk())}
+              aria-label={zvuk ? "Vypnout zvuk" : "Zapnout zvuk"}
+              title={zvuk ? "Vypnout zvuk" : "Zapnout zvuk"}
+              className="shrink-0 rounded p-1 text-slate-500 transition hover:text-slate-200"
             >
-              hadejcenu.cz
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M11 5 6 9H2v6h4l5 4z" />
+                {zvuk ? (
+                  <>
+                    <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                    <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+                  </>
+                ) : (
+                  <path d="m16 9 5 6m0-6-5 6" />
+                )}
+              </svg>
             </button>
-          </h1>
+          </div>
 
           <div className="justify-self-center">
             {hraje && !odhaleno && !jeDenni && (

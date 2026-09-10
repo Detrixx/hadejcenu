@@ -1,12 +1,33 @@
+import { useEffect, useRef } from "react";
 import { formatCena, odchylkaProcent, hodnoceni } from "../lib/skore";
 import { usePocitadlo } from "../lib/usePocitadlo";
+import { bodyTik, vysledek } from "../lib/zvuky";
 import Galerie from "./Galerie";
+
+const NAJEZD_MS = 900;
 
 export default function Odhaleni({ inzerat, tip, body, posledni, onDalsi }) {
   const odchylka = odchylkaProcent(tip, inzerat.cena);
   const { text, barva } = hodnoceni(body);
   const smer = odchylka > 0 ? "nad cenou" : "pod cenou";
-  const zobrazeneBody = usePocitadlo(body, 900);
+  const zobrazeneBody = usePocitadlo(body, NAJEZD_MS);
+
+  // Cvrnkani, jak cislo najizdi. Pocitadlo se meni kazdy snimek, takze
+  // bez brzdy by z toho byl sum misto zvuku.
+  const posledniTik = useRef(0);
+  useEffect(() => {
+    if (zobrazeneBody <= 0) return;
+    const ted = performance.now();
+    if (ted - posledniTik.current < 55) return;
+    posledniTik.current = ted;
+    bodyTik(zobrazeneBody / 1000);
+  }, [zobrazeneBody]);
+
+  // Akord az ve chvili, kdy se cislo zastavi - jinak by se pral s cvrnkanim.
+  useEffect(() => {
+    const id = setTimeout(() => vysledek(body), NAJEZD_MS);
+    return () => clearTimeout(id);
+  }, [body]);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-6">
