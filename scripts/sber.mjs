@@ -1,12 +1,19 @@
 // Sber inzeratu ze Srealit do src/data/inzeraty.json
 //
-//   node scripts/sber.mjs [pocet]      vychozi 300
+//   node scripts/sber.mjs [pocet]                  rovnomerne pres vsechny kraje
+//   node scripts/sber.mjs [pocet] --kraj praha     doplni jen jeden kraj
+//
+// Databaze jen roste - uz nasbirane inzeraty zustavaji a kvota se pocita
+// na celkovy pocet, ne na pocet novych.
 //
 // Fotky se zatim jen odkazuji; stazeni a nahrani na R2 resi scripts/fotky.mjs.
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from "node:fs";
 
-const CIL = Number(process.argv[2]) || 300;
+const argv = process.argv.slice(2);
+const CIL = Number(argv.find((a) => /^\d+$/.test(a))) || 300;
+const jenKrajIndex = argv.indexOf("--kraj");
+const JEN_KRAJ = jenKrajIndex >= 0 ? argv[jenKrajIndex + 1] : null;
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0";
 const PAUZA_MS = 350;     // mezi pozadavky, at Sreality nezatezujeme
 const SOUBEZNE = 3;
@@ -163,8 +170,24 @@ const pouzitelny = (z) =>
 // --- hlavni beh -------------------------------------------------------------
 
 const dnes = new Date().toISOString().slice(0, 10);
-const naKombinaci = Math.ceil(CIL / (KRAJE.length * TYPY.length));
-console.log(`Cil ${CIL} inzeratu, tj. ~${naKombinaci} na kazdou kombinaci kraj/typ.\n`);
+
+if (JEN_KRAJ && !KRAJE.includes(JEN_KRAJ)) {
+  console.error(`Neznamy kraj "${JEN_KRAJ}". Moznosti:\n  ${KRAJE.join("\n  ")}`);
+  process.exit(1);
+}
+
+const kraje = JEN_KRAJ ? [JEN_KRAJ] : KRAJE;
+const naKombinaci = Math.ceil(CIL / (kraje.length * TYPY.length));
+
+// Kolik stranek vypisu smime projit. Pri vyssi kvote jich je potreba vic -
+// na strance je ~21 inzeratu a cast z nich uz mame nebo neprojde filtrem.
+const MAX_STRAN = Math.min(40, Math.max(8, Math.ceil(naKombinaci / 5)));
+
+console.log(
+  JEN_KRAJ
+    ? `Doplnujeme jen ${KRAJE_NAZVY[JEN_KRAJ]} na ${CIL} inzeratu, tj. ~${naKombinaci} na typ.\n`
+    : `Cil ${CIL} inzeratu, tj. ~${naKombinaci} na kazdou kombinaci kraj/typ.\n`
+);
 
 // Databaze jen roste. Uz nasbirane inzeraty zustavaji - maji nahrane fotky
 // na R2 a prodany inzerat je pro hru stejne dobry jako aktivni.
@@ -183,14 +206,14 @@ const videna = new Set(stavajici.map((z) => String(z.id)));
 let chyb = 0;
 
 if (stavajici.length) {
-  console.log(`V databazi uz je ${stavajici.length} inzeratu, doplnujeme na ${CIL}.\n`);
+  console.log(`V databazi uz je ${stavajici.length} inzeratu celkem.\n`);
 }
 
 const kolikJich = (typ, kraj) =>
   stavajici.filter((z) => z.typ === typ && z.kraj === kraj).length;
 
 for (const [typ, typSlug] of TYPY) {
-  for (const kraj of KRAJE) {
+  for (const kraj of kraje) {
     // Kvota plati na celkovy pocet, ne na pocet novych - jinak by kraje,
     // kde uz neco mame, prerostly ostatni.
     const uzMame = kolikJich(typ, KRAJE_NAZVY[kraj] ?? kraj);
@@ -202,7 +225,7 @@ for (const [typ, typSlug] of TYPY) {
       continue;
     }
 
-    for (let strana = 1; strana <= 8 && vzato.length < chci; strana++) {
+    for (let strana = 1; strana <= MAX_STRAN && vzato.length < chci; strana++) {
       const res = await vypis(kraj, typSlug, strana);
       await spi(PAUZA_MS);
       if (!res.length) break;

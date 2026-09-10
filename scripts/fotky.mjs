@@ -3,6 +3,7 @@
 //
 //   node scripts/fotky.mjs --test         jen overi spojeni s R2
 //   node scripts/fotky.mjs --limit 5      zkusi prvnich 5 inzeratu
+//   node scripts/fotky.mjs --nove         jen inzeraty z posledniho sberu
 //   node scripts/fotky.mjs                vsechno
 //
 // Skript lze kdykoli prerusit a spustit znovu - uz nahrane fotky preskoci.
@@ -81,6 +82,22 @@ async function test() {
 
 // --- nahrani fotek -----------------------------------------------------------
 
+// Kratky vypadek site shodi cely pozadavek chybou "fetch failed". Pri
+// tisicich souboru je to skoro jisté, tak to nekolikrat zopakujeme
+// s rostouci pauzou, nez to prohlasime za chybu.
+async function sPokusy(akce, pokusu = 3) {
+  let posledni;
+  for (let i = 0; i < pokusu; i++) {
+    try {
+      return await akce();
+    } catch (e) {
+      posledni = e;
+      if (i < pokusu - 1) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+  throw posledni;
+}
+
 async function jednaFotka(zdroj, klic, velikost) {
   if (await existuje(klic)) return "preskoceno";
   const r = await fetch(zdrojUrl(zdroj, velikost), {
@@ -92,22 +109,37 @@ async function jednaFotka(zdroj, klic, velikost) {
   return data.byteLength;
 }
 
-async function nahrajVse(limit) {
+async function nahrajVse(limit, jenNove = false) {
   if (!existsSync(ZDROJE)) {
     console.error(`Chybi ${ZDROJE} - nejprve spust scripts/sber.mjs`);
     process.exit(1);
   }
   const db = JSON.parse(readFileSync(DATA, "utf8"));
   const zdroje = JSON.parse(readFileSync(ZDROJE, "utf8"));
-  const inzeraty = limit ? db.inzeraty.slice(0, limit) : db.inzeraty;
+
+  // Bez --nove se u kazde fotky nejdriv overuje, jestli uz v bucketu je.
+  // Po doplneni par set inzeratu je to desetitisice dotazu na veci, ktere
+  // davno mame. Znacka fotkyNahrany se nastavi nize u kazdeho inzeratu,
+  // ktery projde bez chyby - datum sberu by na to nestacilo, dva behy
+  // se o nej muzou delit.
+  let inzeraty = db.inzeraty;
+  if (jenNove) {
+    inzeraty = inzeraty.filter((z) => !z.fotkyNahrany);
+    console.log(`Jen inzeraty bez nahranych fotek: ${inzeraty.length}.`);
+  }
+  if (limit) inzeraty = inzeraty.slice(0, limit);
   const celkemFotek = inzeraty.reduce((s, z) => s + (zdroje[z.id]?.length ?? 0), 0);
 
   console.log(`${inzeraty.length} inzeratu, ${celkemFotek} fotek (kazda ve dvou velikostech).\n`);
 
   let hotovo = 0, preskoceno = 0, bajtu = 0;
   const chyby = [];
+  // Inzeraty, u kterych proslo vsechno. Jen ty smi dostat znacku - kdyby
+  // se jedina fotka nenahrala, priste by se uz nedotahla.
+  const bezChyby = new Set();
 
   for (const [poradi, z] of inzeraty.entries()) {
+    const chybPredtim = chyby.length;
     const ukoly = (zdroje[z.id] ?? []).flatMap((zdroj, i) => [
       [zdroj, `${z.id}/${i}.jpg`, "velka"],
       [zdroj, `${z.id}/${i}_n.jpg`, "nahled"],
@@ -116,7 +148,7 @@ async function nahrajVse(limit) {
     for (let i = 0; i < ukoly.length; i += SOUBEZNE) {
       const davka = ukoly.slice(i, i + SOUBEZNE);
       const vysledky = await Promise.allSettled(
-        davka.map(([zdroj, klic, vel]) => jednaFotka(zdroj, klic, vel))
+        davka.map(([zdroj, klic, vel]) => sPokusy(() => jednaFotka(zdroj, klic, vel)))
       );
       vysledky.forEach((v, j) => {
         if (v.status === "rejected") chyby.push({ klic: davka[j][1], duvod: String(v.reason).slice(0, 80) });
@@ -124,6 +156,8 @@ async function nahrajVse(limit) {
         else { hotovo++; bajtu += v.value; }
       });
     }
+
+    if (chyby.length === chybPredtim) bezChyby.add(z.id);
 
     process.stdout.write(
       `\r  ${String(poradi + 1).padStart(4)}/${inzeraty.length}  nahrano ${hotovo}  preskoceno ${preskoceno}  chyb ${chyby.length}  ${(bajtu / 1024 / 1024).toFixed(0)} MB   `
@@ -137,17 +171,27 @@ async function nahrajVse(limit) {
     if (chyby.length > 20) console.log(`  ...a dalsich ${chyby.length - 20}`);
     console.log("");
   }
-  if (chyby.length > celkemFotek * 0.05) {
-    console.error(`PRERUSENO: prilis mnoho chyb (${chyby.length}). Data nechavam beze zmeny.`);
-    process.exit(1);
-  }
-
-  // Soubor nacteme znovu a zmenime v nem jen jedinou polozku. Kdybychom
-  // zapsali kopii z zacatku behu, prepsali bychom vsechno, co mezitim
-  // zapsal soubezne bezici sber - a nove inzeraty by zmizely.
+  // Znacky zapisujeme vzdycky, i kdyz beh skonci chybou. Inzeraty, u kterych
+  // proslo vsechno, uz priste nema smysl kontrolovat - jinak by kazdy vypadek
+  // site zahodil i praci, ktera se povedla.
+  //
+  // Soubor nacteme znovu a menime v nem jen tyhle polozky. Kdybychom zapsali
+  // kopii z zacatku behu, prepsali bychom vsechno, co mezitim zapsal
+  // soubezne bezici sber - a nove inzeraty by zmizely.
   const aktualni = JSON.parse(readFileSync(DATA, "utf8"));
   aktualni.fotkyZaklad = zaklad;
+  for (const z of aktualni.inzeraty) {
+    if (bezChyby.has(z.id)) z.fotkyNahrany = true;
+  }
   writeFileSync(DATA, JSON.stringify(aktualni, null, 2) + "\n", "utf8");
+
+  if (chyby.length > celkemFotek * 0.05) {
+    console.error(
+      `PRERUSENO: prilis mnoho chyb (${chyby.length}). Hotovych inzeratu: ${bezChyby.size}, ` +
+        `zbytek dotahne dalsi spusteni prikazem --nove.`
+    );
+    process.exit(1);
+  }
   console.log(`Hotovo. Nahrano ${hotovo}, preskoceno ${preskoceno}, chyb ${chyby.length}, celkem ${(bajtu / 1024 / 1024).toFixed(0)} MB.`);
   console.log(`Fotky se nacitaji z ${zaklad}`);
 }
@@ -159,5 +203,5 @@ if (args.includes("--test")) {
   await test();
 } else {
   const i = args.indexOf("--limit");
-  await nahrajVse(i >= 0 ? Number(args[i + 1]) : null);
+  await nahrajVse(i >= 0 ? Number(args[i + 1]) : null, args.includes("--nove"));
 }
