@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatCislo } from "../lib/skore";
 import { nactiZebricek, odesliVysledek } from "../lib/zebricek";
 import {
@@ -21,16 +21,16 @@ const OBDOBI = [
 // jenCteni = hrac dnesni vyzvu nehral, takze nema co zapisovat a vidi
 // pouze tabulku.
 export default function Zebricek({ datum, body = null, jenCteni = false }) {
-  const [prezdivka, setPrezdivka] = useState(() => nactiPrezdivku());
-  const [odeslano, setOdeslano] = useState(() => jeOdeslano(datum));
+  const [prezdivka, setPrezdivka] = useState("");
+  const [zapsano, setZapsano] = useState(() => jeOdeslano(datum));
+  const [jmenoVTabulce, setJmenoVTabulce] = useState(() => nactiPrezdivku());
   const [odesilam, setOdesilam] = useState(false);
   const [chyba, setChyba] = useState(null);
   const [data, setData] = useState(null);
   const [nacitam, setNacitam] = useState(true);
   const [obdobi, setObdobi] = useState("den");
-  // Kdo prezdivku nevyplni, zapise se pod tímhle. Ukazujeme to rovnou
-  // v poli jako napovedu, at neni prekvapeny, jak se v tabulce jmenuje.
-  const [host] = useState(() => hostovskeJmeno());
+
+  const muzeZapsat = !jenCteni && Number.isFinite(body);
 
   async function stahni(kdy = obdobi) {
     setNacitam(true);
@@ -45,8 +45,34 @@ export default function Zebricek({ datum, body = null, jenCteni = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datum, obdobi]);
 
-  async function odesli() {
-    const jmeno = prezdivka.trim() || host;
+  // Vysledek se zapisuje sam, bez klikani. Kdo uz nekdy prezdivku zadal,
+  // zapise se pod ni; ostatni pod nahradnim jmenem, ktere si pak muzou
+  // prepsat. Ref hlida, aby se pri opakovanem vykresleni neodesilalo dvakrat.
+  const zapisujeSe = useRef(false);
+  useEffect(() => {
+    if (!muzeZapsat || zapsano || zapisujeSe.current) return;
+    zapisujeSe.current = true;
+
+    (async () => {
+      const jmeno = nactiPrezdivku() || hostovskeJmeno();
+      const vysledek = await odesliVysledek({ datum, hrac: idHrace(), prezdivka: jmeno, body });
+      if (!vysledek.ok) {
+        setChyba(vysledek.chyba);
+        zapisujeSe.current = false;
+        return;
+      }
+      oznacOdeslano(datum);
+      setZapsano(true);
+      setJmenoVTabulce(jmeno);
+      stahni("den");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [muzeZapsat, zapsano, datum, body]);
+
+  // Prejmenovani. Server pri druhem zapisu meni jen jmeno, skore zustava.
+  async function prejmenuj() {
+    const jmeno = prezdivka.trim();
+    if (!jmeno) return;
     setOdesilam(true);
     setChyba(null);
 
@@ -58,12 +84,10 @@ export default function Zebricek({ datum, body = null, jenCteni = false }) {
       return;
     }
     zapisPrezdivku(jmeno);
-    oznacOdeslano(datum);
-    setOdeslano(true);
+    setJmenoVTabulce(jmeno);
+    setPrezdivka("");
     stahni(obdobi);
   }
-
-  const muzeZapsat = !jenCteni && !odeslano && Number.isFinite(body);
 
   return (
     <div className="rounded-xl border border-slate-700 bg-slate-800/40 p-4 text-left">
@@ -96,23 +120,34 @@ export default function Zebricek({ datum, body = null, jenCteni = false }) {
       </div>
 
       {muzeZapsat && obdobi === "den" && (
-        <div className="mb-3 space-y-2">
+        <div className="mb-3 space-y-2 rounded-lg bg-slate-900/40 p-3">
+          <p className="text-sm text-slate-400">
+            {zapsano ? (
+              <>
+                Zapsáno jako{" "}
+                <span className="font-semibold text-slate-200">{jmenoVTabulce}</span>. Chceš jiné
+                jméno?
+              </>
+            ) : (
+              "Zapisuji výsledek…"
+            )}
+          </p>
           <div className="flex gap-2">
             <input
               type="text"
               value={prezdivka}
               onChange={(e) => setPrezdivka(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && odesli()}
-              placeholder={host}
+              onKeyDown={(e) => e.key === "Enter" && prejmenuj()}
+              placeholder="Tvoje přezdívka"
               maxLength={20}
               className="w-full min-w-0 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:border-emerald-400 focus:outline-none"
             />
             <button
-              onClick={odesli}
-              disabled={odesilam}
+              onClick={prejmenuj}
+              disabled={!prezdivka.trim() || odesilam || !zapsano}
               className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
-              {odesilam ? "Odesílám…" : "Zapsat"}
+              {odesilam ? "Ukládám…" : "Uložit"}
             </button>
           </div>
           {chyba && <p className="text-sm text-rose-400">{chyba}</p>}
@@ -127,7 +162,11 @@ export default function Zebricek({ datum, body = null, jenCteni = false }) {
             <li
               key={i}
               className={`flex items-center gap-3 rounded px-2 py-1 text-sm ${
-                i < 3 ? "bg-slate-700/30" : ""
+                r.prezdivka === jmenoVTabulce
+                  ? "bg-emerald-500/10 ring-1 ring-emerald-500/40"
+                  : i < 3
+                    ? "bg-slate-700/30"
+                    : ""
               }`}
             >
               <span className="w-6 shrink-0 text-right tabular-nums text-slate-500">{i + 1}.</span>

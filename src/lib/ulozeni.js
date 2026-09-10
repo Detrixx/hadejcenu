@@ -98,8 +98,20 @@ export const jeOdeslano = (datum) => Boolean(nacti().odeslano?.[datum]);
 // jmenem i dalsi dny.
 export function hostovskeJmeno() {
   const stav = nacti();
-  if (stav.host) return stav.host;
-  const jmeno = "guest" + Math.floor(1000 + Math.random() * 9000);
+
+  // Drive se jmeno generovalo malym pismenem. Kdo uz nejake ma, dostane
+  // stejne cislo s velkym G - jinak by se mu jmeno nezmenilo, dokud by
+  // si nevymazal data prohlizece.
+  if (stav.host) {
+    const opravene = stav.host.replace(/^guest/, "Guest");
+    if (opravene !== stav.host) {
+      stav.host = opravene;
+      zapisStav(stav);
+    }
+    return opravene;
+  }
+
+  const jmeno = "Guest" + Math.floor(1000 + Math.random() * 9000);
   stav.host = jmeno;
   zapisStav(stav);
   return jmeno;

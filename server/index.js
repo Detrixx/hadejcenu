@@ -74,9 +74,13 @@ async function ulozVysledek(request, env) {
     return odpoved(request, { chyba: "Zapisovat lze jen aktualni vyzvu" }, 400);
   }
 
-  // OR IGNORE: prvni odeslani daneho dne plati, dalsi se ticho zahodi.
+  // Vysledek se zapisuje automaticky pod nahradnim jmenem a hrac si ho pak
+  // muze prejmenovat. Pri druhem zapisu proto menime jen prezdivku - skore
+  // zustava to prvni, aby si ho nikdo nemohl opakovanym odesilanim vylepsit.
   await env.DB.prepare(
-    "INSERT OR IGNORE INTO vysledky (datum, hrac, prezdivka, body, vytvoreno) VALUES (?, ?, ?, ?, ?)"
+    `INSERT INTO vysledky (datum, hrac, prezdivka, body, vytvoreno)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(datum, hrac) DO UPDATE SET prezdivka = excluded.prezdivka`
   )
     .bind(datum, hrac, prezdivka, body, Date.now())
     .run();
