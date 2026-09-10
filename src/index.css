@@ -110,3 +110,37 @@ html {
 .pas-nahledu::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+/* Na dotykovem displeji je vychozi slider prilis nizky na spolehlive chyceni
+   prstem. Zvetsujeme mu plochu podle druhu ovladani, ne podle sirky okna -
+   uzke okno na pocitaci ma porad mys. */
+@media (pointer: coarse) {
+  input[type="range"] {
+    height: 2.25rem;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+/* Zachytny stop proti vodorovnemu pretekani. Pouzivame clip, ne hidden -
+   hidden by ze stranky udelal rolovaci kontejner a prestalo by fungovat
+   pripnuti hlavicky a spodni listy (position: sticky). */
+html {
+  overflow-x: clip;
+}
+
+/* Pozadi patri i na koren dokumentu, ne jen na vnitrni prvek. Safari jim
+   vyplnuje plochu kolem bezpecne zony (u ostrova a spodniho indikatoru)
+   a bez toho tam sviti cerna. */
+html,
+body {
+  background-color: var(--color-slate-900);
+}

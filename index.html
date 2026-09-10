@@ -2,12 +2,19 @@
 <html lang="cs">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover pusti stranku az pod dynamicky ostrov a spodni
+         indikator. Bez nej Safari vykresli obsah jen v bezpecne zone a okoli
+         vyplni barvou korene dokumentu. Odsazeni od ostrova si pak resi
+         hlavicka a spodni lista pres env(safe-area-inset-*). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Stranka uz je tmava. Bez techto dvou radku ji doplnky typu Dark Reader
          prebarvuji znovu a rozbiji nadpis i tlacitko, ktere maji barvu z
          prechodu na pozadi (pruhledny text by zustal pruhledny). -->
     <meta name="color-scheme" content="dark" />
     <meta name="darkreader-lock" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Obarvi listu prohlizece na mobilu, at navazuje na pozadi stranky. -->
+    <meta name="theme-color" content="#0f172a" />
     <title>hadejcenu.cz</title>
   </head>
   <body>

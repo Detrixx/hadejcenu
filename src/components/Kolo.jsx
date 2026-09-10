@@ -45,21 +45,20 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
   const misto = [inzerat.obec, inzerat.castObce].filter(Boolean).join(" – ");
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-6">
       <Galerie inzerat={inzerat} />
 
-      {/* Ovladani je pripnute dole a pretece jen karta s udaji. Bez toho by
-          se u inzeratu s mnoha parametry tlacitko "Hadam" schovalo pod okraj
-          okna a hrac by na nej musel rolovat. */}
-      {/* 7rem = odsazeni stranky (1,5) + hlavicka s mezerou (4) + rezerva dole
-          (1,5). Panel zacina pod hlavickou, takze pouhe 100vh minus okraje by
-          ho poslalo o tu hlavicku pod spodni hranu okna. */}
-      <div className="najed flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:max-h-[calc(100vh-7rem)]">
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-          <div className="text-xl font-bold text-slate-50">
+      {/* Na sirokem monitoru je panel pripnuty vedle fotky a pretece jen karta
+          s udaji. Na mobilu se sloupce poskladaji pod sebe, takze by ovladani
+          skoncilo az pod fotkou, mapou i parametry - proto se z nej nize stava
+          lista u spodni hrany obrazovky.
+          7rem = odsazeni stranky + hlavicka s mezerou + rezerva dole. */}
+      <div className="najed flex flex-col gap-3 self-start min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100vh-7rem)] lg:gap-4">
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-3 sm:p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+          <div className="text-lg font-bold text-slate-50 sm:text-xl">
             {inzerat.typ === "byt" ? "Byt" : "Dům"} {inzerat.dispozice}
           </div>
-          <div className="mt-0.5 text-slate-400">{inzerat.plochaM2} m²</div>
+          <div className="mt-0.5 text-sm text-slate-400 sm:text-base">{inzerat.plochaM2} m²</div>
 
           <div className="mt-3 space-y-1.5 border-t border-slate-700 pt-3">
             <div className="font-medium text-slate-200">{misto}</div>
@@ -81,11 +80,30 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
           </div>
         )}
 
-        <div className="shrink-0 space-y-2">
+        {/* Lista s ovladanim. Na mobilu drzi u spodni hrany okna (sticky), aby
+            byla fotka i slider videt naraz. Zaporny okraj ji roztahne pres
+            odsazeni stranky, at podklad sahá od kraje ke kraji. */}
+        <div className="sticky bottom-0 z-30 -mx-4 shrink-0 space-y-1.5 border-t border-slate-800 bg-slate-900/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:-mx-6 sm:px-6 lg:static lg:z-auto lg:mx-0 lg:space-y-2 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+          {/* Cislo je zaroven vstupni pole - jeden prvek misto dvou usetri
+              na mobilu celou radku a je hned jasne, ze se da prepsat. */}
           <div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Tvůj tip</div>
-            <div className="mt-0.5 text-2xl font-bold tabular-nums text-slate-50">
-              {formatCena(tip)}
+            <label
+              htmlFor="tip-cena"
+              className="text-xs uppercase tracking-wide text-slate-500"
+            >
+              Tvůj tip
+            </label>
+            <div className="flex items-baseline gap-1.5 border-b border-slate-700 focus-within:border-emerald-400">
+              <input
+                id="tip-cena"
+                type="text"
+                inputMode="numeric"
+                value={rozepsano ?? formatCislo(tip)}
+                onChange={napsano}
+                onBlur={dopsano}
+                className="w-full min-w-0 bg-transparent py-0.5 text-2xl font-bold tabular-nums text-slate-50 focus:outline-none"
+              />
+              <span className="shrink-0 text-xl font-bold text-slate-400">Kč</span>
             </div>
           </div>
 
@@ -103,26 +121,16 @@ export default function Kolo({ inzerat, rezim = "klasika", vyprselo = false, onT
             <span>{formatCena(MAX)}</span>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-slate-400">
-            <span className="shrink-0">nebo přesně:</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={rozepsano ?? formatCislo(tip)}
-              onChange={napsano}
-              onBlur={dopsano}
-              className="w-full min-w-0 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-right tabular-nums text-slate-100 focus:border-emerald-400 focus:outline-none"
-            />
-            <span className="shrink-0">Kč</span>
-          </label>
+          <button
+            onClick={() => {
+              odeslano.current = true;
+              onTip(tip);
+            }}
+            className="w-full rounded-lg bg-emerald-500 py-3 text-lg font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
+          >
+            Hádám
+          </button>
         </div>
-
-        <button
-          onClick={() => { odeslano.current = true; onTip(tip); }}
-          className="w-full shrink-0 rounded-lg bg-emerald-500 py-3 text-lg font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
-        >
-          Hádám
-        </button>
       </div>
     </div>
   );

@@ -85,9 +85,16 @@ export default function App() {
   const hraje = faze === "hra" && !konec && inzerat;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100">
-      <div className="mx-auto w-full max-w-[min(95rem,calc((100vh-11rem)*4/3+23.5rem))] px-4 py-6 sm:px-6">
-        <header className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:mb-6 sm:gap-3">
+    <div className="min-h-screen bg-slate-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-slate-100">
+      {/* Ten vypocet slouzi jedine k tomu, aby fotka vedle panelu vysla na
+          ~80 % vysky okna. Na mobilu, kde jsou sloupce pod sebou, nema smysl
+          a jednotka vh se tam navic chova nepredvidatelne (meni se podle
+          toho, jestli je videt adresni radek). Proto plati az od lg. */}
+      <div className="mx-auto w-full px-4 py-3 sm:px-6 sm:py-6 lg:max-w-[min(95rem,calc((100vh-11rem)*4/3+23.5rem))]">
+        {/* Na mobilu hlavicka drzi u horni hrany, aby zustala videt casomira
+            a skore i po odrolovani k fotce. Zaporny okraj ji roztahne pres
+            odsazeni stranky, at podklad sahá od kraje ke kraji. */}
+        <header className="sticky top-0 z-30 -mx-4 mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-slate-800 bg-slate-900/95 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur sm:-mx-6 sm:gap-3 sm:px-6 lg:static lg:z-auto lg:mx-0 lg:mb-6 lg:border-0 lg:bg-transparent lg:px-0 lg:pb-0 lg:pt-0 lg:backdrop-blur-none">
           <h1 className="truncate text-base font-bold tracking-tight sm:text-xl">
             <button
               onClick={domu}

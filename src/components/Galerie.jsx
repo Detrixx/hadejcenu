@@ -92,7 +92,7 @@ export default function Galerie({ inzerat }) {
   const velka = fotoUrl(FOTKY_ZAKLAD, id, index, "velka");
 
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <div
         ref={ramecek}
         onTouchStart={dotykStart}

@@ -10,6 +10,12 @@ const omezenyPohyb = () =>
   typeof window !== "undefined" &&
   Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 
+// Na uzkem displeji je uvod vyssi, takze slozeni panelu posune vic obsahu
+// a pusobi to neklidne. Tam ukazku vynechavame a nastaveni rovnou zustava
+// slozene. Rozhoduje sirka okna, ne druh ovladani - jde o mnozstvi pohybu.
+const maloMista = () =>
+  typeof window !== "undefined" && !window.matchMedia?.("(min-width: 640px)").matches;
+
 // Neomezeny cas je schvalne az za nejdelsim limitem, aby slider sel
 // zleva doprava od nejtvrdsiho k nejmirnejsimu.
 const CASY = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 300, 0];
@@ -49,7 +55,9 @@ export default function Uvod({ nastaveni, onStart, denni }) {
   // Pri prvnim prichodu je nastaveni rozbalene, aby bylo videt, co se da
   // menit. Po chvili se slozi a stranka tim vyjede nahoru. Pak uz zustava
   // slozene, aby se tlacitko "Zacit hru" veslo na obrazovku bez rolovani.
-  const [otevreno, setOtevreno] = useState(() => !ukazkaProbehla && !omezenyPohyb());
+  const [otevreno, setOtevreno] = useState(
+    () => !ukazkaProbehla && !omezenyPohyb() && !maloMista()
+  );
 
   // Jakmile uzivatel klikne sam, ukazku prerusime - jinak by mu panel
   // zavrela pod rukama, treba zrovna kdyz vybira kraj.
@@ -57,7 +65,7 @@ export default function Uvod({ nastaveni, onStart, denni }) {
 
   useEffect(() => {
     if (ukazkaProbehla) return;
-    if (omezenyPohyb()) {
+    if (omezenyPohyb() || maloMista()) {
       ukazkaProbehla = true;
       return;
     }
