@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { formatCislo } from "../lib/skore";
 import { nactiZebricek, odesliVysledek } from "../lib/zebricek";
-import { idHrace, nactiPrezdivku, zapisPrezdivku, oznacOdeslano, jeOdeslano } from "../lib/ulozeni";
+import {
+  idHrace,
+  nactiPrezdivku,
+  zapisPrezdivku,
+  oznacOdeslano,
+  jeOdeslano,
+  hostovskeJmeno,
+} from "../lib/ulozeni";
 
 // Klouzava okna, ne kalendarni tyden a mesic - zebricek tak nikdy
 // nezacina prazdny jen proto, ze zrovna zacalo nove obdobi.
@@ -21,6 +28,9 @@ export default function Zebricek({ datum, body = null, jenCteni = false }) {
   const [data, setData] = useState(null);
   const [nacitam, setNacitam] = useState(true);
   const [obdobi, setObdobi] = useState("den");
+  // Kdo prezdivku nevyplni, zapise se pod tímhle. Ukazujeme to rovnou
+  // v poli jako napovedu, at neni prekvapeny, jak se v tabulce jmenuje.
+  const [host] = useState(() => hostovskeJmeno());
 
   async function stahni(kdy = obdobi) {
     setNacitam(true);
@@ -36,8 +46,7 @@ export default function Zebricek({ datum, body = null, jenCteni = false }) {
   }, [datum, obdobi]);
 
   async function odesli() {
-    const jmeno = prezdivka.trim();
-    if (!jmeno) return;
+    const jmeno = prezdivka.trim() || host;
     setOdesilam(true);
     setChyba(null);
 
@@ -94,13 +103,13 @@ export default function Zebricek({ datum, body = null, jenCteni = false }) {
               value={prezdivka}
               onChange={(e) => setPrezdivka(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && odesli()}
-              placeholder="Tvoje přezdívka"
+              placeholder={host}
               maxLength={20}
               className="w-full min-w-0 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:border-emerald-400 focus:outline-none"
             />
             <button
               onClick={odesli}
-              disabled={!prezdivka.trim() || odesilam}
+              disabled={odesilam}
               className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
               {odesilam ? "Odesílám…" : "Zapsat"}

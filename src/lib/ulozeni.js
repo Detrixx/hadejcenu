@@ -92,3 +92,15 @@ export function oznacOdeslano(datum) {
 }
 
 export const jeOdeslano = (datum) => Boolean(nacti().odeslano?.[datum]);
+
+// Nahradni jmeno pro toho, kdo prezdivku nevyplni. Generuje se jednou
+// a zustava - tentyz prohlizec tak vystupuje v zebricku pod stejnym
+// jmenem i dalsi dny.
+export function hostovskeJmeno() {
+  const stav = nacti();
+  if (stav.host) return stav.host;
+  const jmeno = "guest" + Math.floor(1000 + Math.random() * 9000);
+  stav.host = jmeno;
+  zapisStav(stav);
+  return jmeno;
+}
