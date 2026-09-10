@@ -85,9 +85,11 @@ export default function Konec({
         </button>
       </div>
 
-      <MapaVysledku vysledky={vysledky} />
-
+      {/* Zebricek je nad mapou schvalne - zapsat se je akce, kterou ma hrac
+          udelat hned, kdezto mapa je odmena k prohlizeni. */}
       {jeDenni && datum && <Zebricek datum={datum} body={celkem} />}
+
+      <MapaVysledku vysledky={vysledky} />
 
       <ol className="space-y-2">
         {vysledky.map((v, i) => {
