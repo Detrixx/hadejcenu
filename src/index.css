@@ -144,3 +144,34 @@ html,
 body {
   background-color: var(--color-slate-900);
 }
+
+/* Emoji na pozadi uvodu. Animujeme jen posun a pruhlednost - obojí zvlada
+   grafika, takze deset prvku nic nestoji. Sila pruhlednosti prichazi
+   z promenne, aby si kazdy prvek mohl nest svoji. */
+@keyframes plovani {
+  0% {
+    transform: translate3d(0, 14vh, 0) rotate(-8deg);
+    opacity: 0;
+  }
+  18%,
+  82% {
+    opacity: var(--sila, 0.08);
+  }
+  100% {
+    transform: translate3d(0, -14vh, 0) rotate(8deg);
+    opacity: 0;
+  }
+}
+
+.plove {
+  animation-name: plovani;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plove {
+    animation: none;
+  }
+}

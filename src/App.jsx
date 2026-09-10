@@ -11,6 +11,7 @@ import Kolo from "./components/Kolo";
 import Odhaleni from "./components/Odhaleni";
 import Konec from "./components/Konec";
 import Casomira from "./components/Casomira";
+import Pozadi from "./components/Pozadi";
 
 const VYCHOZI_NASTAVENI = { typ: null, kraj: null, cas: 60, rezim: "klasika" };
 
@@ -102,6 +103,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-slate-100">
+      {/* Pozadi patri az sem, ne dovnitr uvodni karty. Ta je omezena sirkou
+          a ma nabehovou animaci s posunem - prvek s animovanym posunem se
+          stava vztaznym ramcem pro potomky ukotvene k oknu, takze by se
+          emoji uzavrela do sirky karty. */}
+      {faze === "uvod" && <Pozadi />}
+
       {/* Ten vypocet slouzi jedine k tomu, aby fotka vedle panelu vysla na
           ~80 % vysky okna. Na mobilu, kde jsou sloupce pod sebou, nema smysl
           a jednotka vh se tam navic chova nepredvidatelne (meni se podle

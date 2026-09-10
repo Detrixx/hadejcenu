@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { dostupneKraje, spocitejNabidku, POCET_KOL, REZIMY } from "../lib/hra";
+import { formatCislo } from "../lib/skore";
 import DenniVyzva from "./DenniVyzva";
 
 // Ukazka nastaveni se prehraje jen jednou za nacteni stranky. Bez toho by
@@ -112,6 +113,10 @@ export default function Uvod({ nastaveni, onStart, denni }) {
           </h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">
             Prohlédni si fotky nemovitosti a zkus odhadnout, za kolik se prodává.
+          </p>
+          <p className="mt-2 text-xs text-slate-600">
+            {formatCislo(spocitejNabidku({}))} nemovitostí ze Sreality.cz ·{" "}
+            {kraje.length} krajů
           </p>
         </div>
 
