@@ -109,6 +109,18 @@ export default function App() {
           emoji uzavrela do sirky karty. */}
       {faze === "uvod" && <Pozadi />}
 
+      {/* Podpis jen na uvodu. Behem hry je vpravo dole tlacitko "Hadam",
+          na mobilu dokonce cela lista s ovladanim - tam by prekazel.
+          pointer-events-none, aby nikdy nechytal kliknuti. */}
+      {faze === "uvod" && (
+        <div
+          className="pointer-events-none fixed bottom-0 right-0 z-20 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-[max(0.75rem,env(safe-area-inset-right))] text-xs text-slate-600"
+          aria-label="Autor"
+        >
+          made by Detrix
+        </div>
+      )}
+
       {/* Ten vypocet slouzi jedine k tomu, aby fotka vedle panelu vysla na
           ~80 % vysky okna. Na mobilu, kde jsou sloupce pod sebou, nema smysl
           a jednotka vh se tam navic chova nepredvidatelne (meni se podle
