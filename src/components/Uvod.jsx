@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { dostupneKraje, spocitejNabidku, POCET_KOL, REZIMY } from "../lib/hra";
 import DenniVyzva from "./DenniVyzva";
+
+// Ukazka nastaveni se prehraje jen jednou za nacteni stranky. Bez toho by
+// se opakovala pokazde, kdyz se hrac vrati z hry na uvod, a to uz otravuje.
+let ukazkaProbehla = false;
+
+const omezenyPohyb = () =>
+  typeof window !== "undefined" &&
+  Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 
 // Neomezeny cas je schvalne az za nejdelsim limitem, aby slider sel
 // zleva doprava od nejtvrdsiho k nejmirnejsimu.
@@ -38,9 +46,37 @@ export default function Uvod({ nastaveni, onStart, denni }) {
     const i = CASY.indexOf(nastaveni.cas);
     return i >= 0 ? i : CASY.indexOf(60);
   });
-  // Nastaveni je slozene, aby se tlacitko "Zacit hru" veslo na obrazovku
-  // bez rolovani. Kdo chce filtrovat, rozbali si ho.
-  const [otevreno, setOtevreno] = useState(false);
+  // Pri prvnim prichodu je nastaveni rozbalene, aby bylo videt, co se da
+  // menit. Po chvili se slozi a stranka tim vyjede nahoru. Pak uz zustava
+  // slozene, aby se tlacitko "Zacit hru" veslo na obrazovku bez rolovani.
+  const [otevreno, setOtevreno] = useState(() => !ukazkaProbehla && !omezenyPohyb());
+
+  // Jakmile uzivatel klikne sam, ukazku prerusime - jinak by mu panel
+  // zavrela pod rukama, treba zrovna kdyz vybira kraj.
+  const sahlNaTo = useRef(false);
+
+  useEffect(() => {
+    if (ukazkaProbehla) return;
+    if (omezenyPohyb()) {
+      ukazkaProbehla = true;
+      return;
+    }
+
+    const zavrit = setTimeout(() => {
+      // Priznak nastavujeme az tady, ne na zacatku efektu. React ve vyvoji
+      // komponentu pripoji dvakrat a mezitim efekt uklidi - kdyby se priznak
+      // nastavil hned, druhe pripojeni by ukazku preskocilo a nic by se
+      // nestalo.
+      ukazkaProbehla = true;
+      if (!sahlNaTo.current) setOtevreno(false);
+    }, 1800);
+    return () => clearTimeout(zavrit);
+  }, []);
+
+  function prepniNastaveni() {
+    sahlNaTo.current = true;
+    setOtevreno((o) => !o);
+  }
 
   const cas = CASY[casIndex];
   const kraje = dostupneKraje();
@@ -75,7 +111,7 @@ export default function Uvod({ nastaveni, onStart, denni }) {
 
         <div className="rounded-xl border-2 border-slate-700 bg-slate-800/40">
           <button
-            onClick={() => setOtevreno((o) => !o)}
+            onClick={prepniNastaveni}
             aria-expanded={otevreno}
             className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-700/20"
           >
@@ -99,8 +135,16 @@ export default function Uvod({ nastaveni, onStart, denni }) {
             </svg>
           </button>
 
-          {otevreno && (
-            <div className="space-y-4 border-t border-slate-700 px-4 pb-4 pt-4">
+          {/* Vyska se animuje pres grid-rows 0fr -> 1fr. Je to jediny zpusob,
+              jak plynule rozbalit obsah, jehoz vysku dopredu neznam - max-height
+              by se muselo hadat a pri spatnem odhadu by to cuklo. */}
+          <div
+            className={`grid transition-[grid-template-rows] duration-700 ease-in-out ${
+              otevreno ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="space-y-4 border-t border-slate-700 px-4 pb-4 pt-4">
               <Sekce popis="Režim">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {REZIMY.map((r) => {
@@ -185,8 +229,9 @@ export default function Uvod({ nastaveni, onStart, denni }) {
                   className="w-full accent-emerald-400"
                 />
               </Sekce>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="space-y-2">
