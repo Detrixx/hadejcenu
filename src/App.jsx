@@ -113,11 +113,18 @@ export default function App() {
           na mobilu dokonce cela lista s ovladanim - tam by prekazel.
           pointer-events-none, aby nikdy nechytal kliknuti. */}
       {faze === "uvod" && (
-        <div
-          className="pointer-events-none fixed bottom-0 right-0 z-20 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-[max(0.75rem,env(safe-area-inset-right))] text-xs text-slate-600"
-          aria-label="Autor"
-        >
-          made by Detrix
+        <div className="pointer-events-none fixed bottom-0 right-0 z-20 max-w-[20rem] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-[max(0.75rem,env(safe-area-inset-right))] text-right text-xs leading-relaxed text-slate-600">
+          <div>Neoficiální projekt · data ze Sreality.cz</div>
+          <div>
+            made by Detrix ·{" "}
+            {/* Odkaz musi klikani prijimat, i kdyz obal ho zamerne nepropousti. */}
+            <a
+              href="mailto:detrixos1@gmail.com"
+              className="pointer-events-auto underline decoration-slate-700 underline-offset-2 transition hover:text-slate-400"
+            >
+              kontakt
+            </a>
+          </div>
         </div>
       )}
 
