@@ -15,10 +15,63 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- Obarvi listu prohlizece na mobilu, at navazuje na pozadi stranky. -->
     <meta name="theme-color" content="#0f172a" />
-    <title>hadejcenu.cz</title>
+
+    <title>Hádej cenu – uhodneš, za kolik se prodává byt nebo dům?</title>
+    <meta
+      name="description"
+      content="Online hra s reálnými inzeráty nemovitostí z celé ČR. Prohlédni si fotky, odhadni cenu a porovnej se s ostatními v denní výzvě."
+    />
+    <link rel="canonical" href="https://hadejcenu.cz/" />
+
+    <!-- Nahled pri sdileni odkazu (Messenger, WhatsApp, Discord, Facebook).
+         Bez toho se posila holy odkaz bez obrazku i popisu. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hadejcenu.cz/" />
+    <meta property="og:site_name" content="hadejcenu.cz" />
+    <meta property="og:locale" content="cs_CZ" />
+    <meta property="og:title" content="Hádej cenu – uhodneš, za kolik se prodává byt nebo dům?" />
+    <meta
+      property="og:description"
+      content="Online hra s reálnými inzeráty nemovitostí z celé ČR. Prohlédni si fotky, odhadni cenu a porovnej se s ostatními v denní výzvě."
+    />
+    <meta property="og:image" content="https://hadejcenu.cz/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Uvnitr korene je zaloznl text, ktery React pri spusteni nahradi. Slouzi
+      vyhledavacum a komukoli bez JavaScriptu - bez nej je stranka prazdna
+      schranka a Google z ni nema co vzit.
+    -->
+    <div id="root">
+      <main style="max-width: 40rem; margin: 4rem auto; padding: 0 1.5rem; font-family: system-ui, sans-serif; color: #cbd5e1">
+        <h1 style="color: #f1f5f9">Hádej cenu</h1>
+        <p>
+          Online hra, ve které hádáš ceny nemovitostí podle skutečných inzerátů
+          z celé České republiky. Prohlédneš si fotky bytu nebo domu, uvidíš
+          dispozici, plochu, patro a lokalitu — a zkusíš odhadnout, za kolik se
+          prodává. Čím blíž jsi, tím víc bodů dostaneš.
+        </p>
+        <h2 style="color: #f1f5f9">Jak se hraje</h2>
+        <p>
+          Každá hra má pět kol. Body se počítají z poměru tvého tipu ke skutečné
+          ceně, takže garsonka za milion a půl je stejně těžká jako vila za
+          třicet. Vybrat si můžeš jen byty nebo jen domy, omezit hádání na jeden
+          kraj a nastavit čas na kolo od pěti sekund po neomezeně.
+        </p>
+        <h2 style="color: #f1f5f9">Denní výzva</h2>
+        <p>
+          Každý den čeká na všechny hráče stejná pětice nemovitostí. Výsledek se
+          zapíše do žebříčku a za každý odehraný den v řadě roste série.
+        </p>
+        <p>Hra vyžaduje zapnutý JavaScript.</p>
+        <p style="color: #64748b; font-size: 0.875rem">
+          Neoficiální projekt · data ze Sreality.cz
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
 
     <!-- Cloudflare Web Analytics. Merit musi rucne vlozenym skriptem, protoze
