@@ -1,5 +1,7 @@
 # hadejcenu.cz
 
+**Hrát: [hadejcenu.cz](https://hadejcenu.cz)**
+
 Hra na hádání cen nemovitostí podle fotek. Inspirováno
 [cribguessr.com](https://cribguessr.com), s českými inzeráty.
 

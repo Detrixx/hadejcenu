@@ -13,6 +13,10 @@ const POVOLENE_ZDROJE = [
 ];
 
 const MAX_BODU = 5000;
+// Kolik radku zebricku vracime. Neomezene by to byt nemelo - pri tisicich
+// hracu by odpoved narostla do stovek kilobajtu a hra ji stahuje pri kazdem
+// otevreni zebricku.
+const MAX_RADKU = 1000;
 const MAX_DELKA_PREZDIVKY = 20;
 
 function hlavicky(request) {
@@ -115,7 +119,8 @@ async function nactiZebricek(request, env, url) {
 
   if (obdobi === "den") {
     const { results } = await env.DB.prepare(
-      "SELECT prezdivka, body, 1 AS dnu FROM vysledky WHERE datum = ? ORDER BY body DESC, vytvoreno ASC LIMIT 100"
+      "SELECT prezdivka, body, 1 AS dnu FROM vysledky WHERE datum = ? ORDER BY body DESC, vytvoreno ASC LIMIT " +
+        MAX_RADKU
     )
       .bind(datum)
       .all();
@@ -138,7 +143,7 @@ async function nactiZebricek(request, env, url) {
      WHERE datum BETWEEN ? AND ?
      GROUP BY hrac
      ORDER BY body DESC, dnu DESC
-     LIMIT 100`
+     LIMIT ${MAX_RADKU}`
   )
     .bind(od, datum, od, datum)
     .all();
